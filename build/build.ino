@@ -93,7 +93,8 @@ typedef struct WaveForm {
 WaveForm wave = {0};
 
 unsigned long time = 0;
-const unsigned long delta_clock = (256 - 250) * (1/1) * (float)(100000000/16000000); //Nanoseconds
+//(256 - preload) * (1/ratio) * (1/16*10^6)
+const unsigned long delta_clock = 1.6; //Microseconds
 
 int index = 0;
 const int cap = 280;
@@ -152,7 +153,6 @@ int maxBOffset() {
     int index = 0;
     while(index < cap) {
         if(prev_a == 0 && wave.a_chan[index] == 1) {
-            Serial.println("prevA = curA");
             while(index < cap) {
                 if(wave.b_chan[index] == (bool)1) {
                     if(current_offset > max_offset)
@@ -186,6 +186,43 @@ bool determineDirection() {
     }
     return 0;
 }
+
+float avgSpeed() {
+    bool prev_b = 0;
+    unsigned long t1 = 0;
+    unsigned long t2 = 0;
+
+    int i = 0;
+    while(i < cap) {
+        if(wave.b_chan[i] == (bool)0 && prev_b == (bool)1) {
+            t1 = wave.time[i];
+            prev_b = wave.b_chan[i];
+            break;
+        }
+
+        prev_b = wave.b_chan[i];
+        i += 1;
+    }
+    //At B 1->0
+
+    while(i < cap) {
+        if(wave.b_chan[i] == (bool)0 && prev_b == (bool)1) {
+            t2 = wave.time[i];
+            prev_b = wave.b_chan[i];
+            break;
+        }
+
+        prev_b = wave.b_chan[i];
+        i += 1;
+    }
+    //At next B 1->0
+
+    float dt = (t2 - t1);
+    //Time from B 1->0->1 
+
+    return (90*1000000*60)/(dt*360);
+
+}
 //If Lower is on
 
 void setup() {
@@ -203,8 +240,12 @@ void setup() {
 
     readChannels();
     printWaveForm();
-    Serial.println("Direction: ");
+
+    Serial.print("Direction: ");
     Serial.println(determineDirection());
+
+    Serial.print("Speed: ");
+    Serial.println(avgSpeed());
 
 }
 

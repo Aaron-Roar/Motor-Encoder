@@ -15,8 +15,12 @@ void setup() {
 
     readChannels();
     printWaveForm();
+
     Serial.print("Direction: ");
     Serial.println(determineDirection());
+
+    Serial.print("Speed: ");
+    Serial.println(avgSpeed());
 
 }
 
