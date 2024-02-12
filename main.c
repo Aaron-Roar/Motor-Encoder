@@ -10,11 +10,13 @@ void setup() {
     photoResOn();
 
     motorInit();
-    motorPowPercent(0.23);
+    motorPowPercent(0.2);
     delay(10000);
 
     readChannels();
     printWaveForm();
+    Serial.print("Direction: ");
+    Serial.println(determineDirection());
 
 }
 

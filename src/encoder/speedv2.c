@@ -1,14 +1,16 @@
 typedef struct WaveForm {
-    bool a_chan[200];
-    bool b_chan[200];
-    unsigned long time[200];
+    bool a_chan[280];
+    bool b_chan[280];
+    unsigned long time[280];
 }WaveForm;
 
-
 WaveForm wave = {0};
+
+unsigned long time = 0;
+const unsigned long delta_clock = (256 - 250) * (1/1) * (float)(100000000/16000000); //Nanoseconds
+
 int index = 0;
-int cap = 200;
-unsigned long start_time = 0;
+const int cap = 280;
 
 ISR(TIMER2_OVF_vect) {
     if(index >= cap)
@@ -16,10 +18,12 @@ ISR(TIMER2_OVF_vect) {
 
     wave.a_chan[index] = readChannel(a_chan);
     wave.b_chan[index] = readChannel(b_chan);
-    wave.time[index] = 1;//micros() - start_time;
+
+    wave.time[index] = time;
+    time += delta_clock; 
 
     index += 1;
-    TCNT2 = 250;
+    //TCNT2 = 250; //Preloading
 }
 
 //Starts the channel iterupt
@@ -28,9 +32,8 @@ void readChannels() {
     TCCR2B = 0; //More initialization of same timer
 
     TCCR2B |= 0b00000001; //Setting prescalar, smallest option for higher frequency
-    TCNT2 = 250;
+    //TCNT2 = 250; //Preloading
 
-    start_time = micros();
     TIMSK2 |= 0b00000001; //Setting ovf interupt on
 }
 
@@ -49,4 +52,50 @@ void printWaveForm() {
         
         i += 1;
     }
+    Serial.println("---End---Waveform---");
+}
+
+//How far is B following A maxiumum
+int maxBOffset() {
+    int max_offset = 0;
+    int current_offset = 0;
+    bool prev_a = 1;
+
+    //This method is flawed bc it does not handle if chan_a 1->0 
+    //before chan_b 0->1
+    int index = 0;
+    while(index < cap) {
+        if(prev_a == 0 && wave.a_chan[index] == 1) {
+            while(index < cap) {
+                if(wave.b_chan[index] == (bool)1) {
+                    if(current_offset > max_offset)
+                        max_offset = current_offset;
+                    current_offset = 0;
+                    break; //This is the end of the offset
+                }
+                else {
+                    current_offset += 1; //This is another b offset
+                }
+
+                prev_a = wave.a_chan[index];
+                index += 1;
+            }
+        }
+
+        prev_a = wave.a_chan[index];
+        index += 1;
+    }
+
+    return max_offset;
+        //A goes to 1 from 0
+        //How many B 0's are there until its 1
+        //repeat every A 0 to 1 change
+}
+
+bool determineDirection() {
+    int offset = maxBOffset();
+    if(offset > 14) {
+        return 1;
+    }
+    return 0;
 }
