@@ -10,7 +10,7 @@ void setup() {
     photoResOn();
 
     motorInit();
-    motorPowPercent(0.2);
+    motorPowPercent(0.20);
     delay(10000);
 
     readChannels();
@@ -25,10 +25,8 @@ void setup() {
 }
 
 void loop() {
-//    Serial.print("A: ");
-//    Serial.println(readChannel(a_chan));
-//
-//    Serial.print("B: ");
-//    Serial.println(readChannel(b_chan));
-//    delay(200);
+//VOLTAGE FOR CURRENT MEASUREMENT
+//    float voltage = (float)analogRead(A1) * ((float)5/(float)1023);
+//    Serial.print("Voltage: ");
+//    Serial.println(voltage);
 }

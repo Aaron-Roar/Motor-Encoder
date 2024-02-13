@@ -8,7 +8,7 @@ WaveForm wave = {0};
 
 unsigned long time = 0;
 //(256 - preload) * (1/ratio) * (1/16*10^6)
-const unsigned long delta_clock = 1.6; //Microseconds
+const unsigned long delta_clock = 16; //Microseconds
 
 int index = 0;
 const int cap = 280;
